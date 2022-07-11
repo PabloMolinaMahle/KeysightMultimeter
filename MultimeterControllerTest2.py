@@ -5,12 +5,32 @@ Created on Mon Jul 11 13:30:56 2022
 @author: M0188337
 """
 
-
 import pyvisa as visa
 import time
 import csv
 
 from measure import Measure
+from datetime import datetime
+
+# Method to process time variable
+def processTime():
+    
+    # Get current time
+    currentTime = time.time()
+    
+    # Split time 
+    realPart, decimalPart = str(currentTime).split(".")
+    
+    # Convert time Epoch to real time
+    dateAndTime = datetime.fromtimestamp(int(realPart))
+    
+    # Convert date and time to excel format
+    dateAndTime = str(datetime.fromtimestamp(int(realPart)).hour) + ":" + str(datetime.fromtimestamp(int(realPart)).minute) + ":" + str(datetime.fromtimestamp(int(realPart)).second)  + ","
+    
+    # Add decimal part
+    dateAndTime += decimalPart
+    
+    return str(dateAndTime)
 
 # Instrument connection
 rm = visa.ResourceManager()
@@ -28,7 +48,7 @@ measureTimeBetweenMeasures = 1 # Time between meassures
 
 # Export file
 f = open('csv_file.csv', 'w', newline='')
-writer = csv.writer(f)
+writer = csv.writer(f, delimiter=';')
 
 # Reset timer
 startTime = time.time()
@@ -39,12 +59,12 @@ while time.time() < startTime + measureTime:
     temp_values = v34461A.query_ascii_values(':READ?')
     
     # Create the meassure
-    currMeasure = Measure(time.time(), "{:f}".format(temp_values[0]))
+    currMeasure = Measure(processTime(), "{:f}".format(temp_values[0]))
     
     # write data line
     writer.writerow(currMeasure.GetMeasureAsList())
     
-    print("Time: " + str(currMeasure.time) + " value: " + str(currMeasure.value))
+    print("Measure list: time: " + currMeasure.GetMeasureAsList()[0] + " value: " + currMeasure.GetMeasureAsList()[1])
 
 # Close export file
 f.close()
